@@ -1,0 +1,2867 @@
+swagger: '2.0'
+info:
+  title: API
+  version: 2.19.0
+  description: >
+    Create API keys in your profile and use public API key as username and
+    secret as password to authorize.
+schemes:
+  - https
+  - http
+basePath: /api/2
+produces:
+  - application/json
+securityDefinitions:
+  BasicAuth:
+    type: basic
+    description: |
+      You should use apiKey and apiSecret as login & password.
+paths:
+  /public/symbol:
+    get:
+      summary: Available Currency Symbols
+      description: >
+        Get list of avialable Symbols (Currency Pairs). You can read more info
+        at http://www.investopedia.com/terms/c/currencypair.asp
+      parameters:
+        - name: symbols
+          in: query
+          type: string
+          required: false
+          description: symbols separated by commas; if empty - all symbols by default
+      tags:
+        - Public
+      responses:
+        '200':
+          description: An array of symbols
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Symbol'
+  '/public/symbol/{symbol}':
+    get:
+      summary: Get symbol info
+      parameters:
+        - name: symbol
+          in: path
+          type: string
+          required: true
+      tags:
+        - Public
+      responses:
+        '200':
+          description: Symbol configuration
+          schema:
+            $ref: '#/definitions/Symbol'
+        '400':
+          description: Symbol not found
+          schema:
+            $ref: '#/definitions/Error'
+  /public/currency:
+    get:
+      summary: Available Currencies
+      description: |
+        Get list of avialable Currencies
+      parameters:
+        - name: currencies
+          in: query
+          type: string
+          required: false
+          description: currencies separated by commas; if empty - all currencies by default
+      tags:
+        - Public
+      responses:
+        '200':
+          description: An array of currencies
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Currency'
+  '/public/currency/{currency}':
+    get:
+      summary: Get currency info
+      parameters:
+        - name: currency
+          in: path
+          type: string
+          required: true
+      tags:
+        - Public
+      responses:
+        '200':
+          description: Currency configuration
+          schema:
+            $ref: '#/definitions/Currency'
+        '400':
+          description: Currency not found
+          schema:
+            $ref: '#/definitions/Error'
+  /public/ticker:
+    get:
+      summary: Tickers
+      description: >
+        The Ticker endpoint returns last 24H information about of all requested
+        symbols.
+      parameters:
+        - name: symbols
+          in: query
+          type: string
+          required: false
+          description: symbols separated by commas; if empty - all symbols by default
+      tags:
+        - Public
+      responses:
+        '200':
+          description: An array of tickers
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Ticker'
+        '400':
+          description: No such symbol
+          schema:
+            $ref: '#/definitions/Error'
+  '/public/ticker/{symbol}':
+    get:
+      summary: Ticker for symbol
+      description: |
+        The Ticker endpoint returns last 24H information about symbol.
+      parameters:
+        - name: symbol
+          in: path
+          type: string
+          required: true
+      tags:
+        - Public
+      responses:
+        '200':
+          description: Ticker for symbol
+          schema:
+            $ref: '#/definitions/Ticker'
+        '400':
+          description: No such symbol
+          schema:
+            $ref: '#/definitions/Error'
+  /public/trades:
+    get:
+      summary: Trades
+      parameters:
+        - name: symbols
+          in: query
+          type: string
+          required: false
+          description: symbols separated by commas; if empty - all symbols by default
+        - name: sort
+          in: query
+          type: string
+          description: Sort direction
+          default: DESC
+          required: false
+          enum:
+            - DESC
+            - ASC
+        - name: from
+          in: query
+          type: string
+          description: datetime in iso format or timestamp in millisecond
+        - name: till
+          in: query
+          type: string
+          description: datetime in iso format or timestamp in millisecond
+        - name: limit
+          in: query
+          type: integer
+          default: 100
+          minimum: 1
+          maximum: 1000
+          format: int32
+          description: Allowed from 1 to 1000
+        - name: offset
+          in: query
+          type: integer
+          minimum: 0
+          maximum: 100000
+          format: int32
+          description: Allowed from 0 to 100000
+      tags:
+        - Public
+      responses:
+        '200':
+          description: Map of trades (key - symbol)
+          schema:
+            properties:
+              string:
+                type: array
+                items:
+                  $ref: '#/definitions/PublicTrade'
+        '400':
+          description: No such symbol
+          schema:
+            $ref: '#/definitions/Error'
+  '/public/trades/{symbol}':
+    get:
+      summary: Trades for symbol
+      parameters:
+        - name: symbol
+          in: path
+          type: string
+          required: true
+        - name: sort
+          in: query
+          type: string
+          description: Sort direction
+          default: DESC
+          required: false
+          enum:
+            - DESC
+            - ASC
+        - name: by
+          in: query
+          type: string
+          description: Filter field
+          default: timestamp
+          required: false
+          enum:
+            - timestamp
+            - id
+        - name: from
+          in: query
+          type: string
+          description: >-
+            If filter by timestamp, then datetime in iso format or timestamp in
+            millisecond otherwise trade id
+        - name: till
+          in: query
+          type: string
+          description: >-
+            If filter by timestamp, then datetime in iso format or timestamp in
+            millisecond otherwise trade id (inclusive)
+        - name: limit
+          in: query
+          type: integer
+          default: 100
+          minimum: 1
+          maximum: 1000
+          format: int32
+          description: Allowed from 1 to 1000
+        - name: offset
+          in: query
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100000
+          description: Allowed from 0 to 100000
+      tags:
+        - Public
+      responses:
+        '200':
+          description: An array of trades
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/PublicTrade'
+        '400':
+          description: No such symbol
+          schema:
+            $ref: '#/definitions/Error'
+  /public/orderbook:
+    get:
+      summary: Orderbook
+      parameters:
+        - name: symbols
+          in: query
+          type: string
+          required: false
+          description: symbols separated by commas; if empty - all symbols by default
+        - name: limit
+          description: 0 - full orderbook otherwise number of levels
+          in: query
+          type: integer
+          default: 10
+      tags:
+        - Public
+      responses:
+        '200':
+          description: Map of orderbooks (key - symbol)
+          schema:
+            properties:
+              string:
+                $ref: '#/definitions/Orderbook'
+        '400':
+          description: No such symbol
+          schema:
+            $ref: '#/definitions/Error'
+  '/public/orderbook/{symbol}':
+    get:
+      summary: Orderbook for symbol
+      parameters:
+        - name: symbol
+          in: path
+          type: string
+          required: true
+        - name: limit
+          description: 0 - full orderbook otherwise number of levels
+          in: query
+          type: integer
+          format: int32
+          default: 100
+        - name: volume
+          in: query
+          type: number
+      tags:
+        - Public
+      responses:
+        '200':
+          description: Orderbook for symbol
+          schema:
+            $ref: '#/definitions/Orderbook'
+        '400':
+          description: No such symbol
+          schema:
+            $ref: '#/definitions/Error'
+  /public/candles:
+    get:
+      summary: Candles
+      parameters:
+        - name: symbols
+          in: query
+          type: string
+          required: false
+          description: symbols separated by commas; if empty - all symbols by default
+        - name: period
+          in: query
+          type: string
+          default: M30
+          enum:
+            - M1
+            - M3
+            - M5
+            - M15
+            - M30
+            - H1
+            - H4
+            - D1
+            - D7
+            - 1M
+        - name: sort
+          in: query
+          type: string
+          description: Sort direction
+          default: ASC
+          required: false
+          enum:
+            - DESC
+            - ASC
+        - name: from
+          in: query
+          type: string
+          description: Datetime in iso format or timestamp in millisecond
+        - name: till
+          in: query
+          type: string
+          description: Datetime in iso format or timestamp in millisecond
+        - name: limit
+          in: query
+          type: integer
+          default: 100
+          minimum: 1
+          maximum: 1000
+          format: int32
+          description: Allowed from 1 to 1000
+        - name: offset
+          in: query
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100000
+          description: Allowed from 0 to 100000
+      tags:
+        - Public
+      responses:
+        '200':
+          description: Map of candles (key - symbol)
+          schema:
+            properties:
+              string:
+                type: array
+                items:
+                  $ref: '#/definitions/Candle'
+        '400':
+          description: No such symbol
+          schema:
+            $ref: '#/definitions/Error'
+  '/public/candles/{symbol}':
+    get:
+      summary: Candles for symbol
+      parameters:
+        - name: symbol
+          in: path
+          type: string
+          required: true
+        - name: period
+          in: query
+          type: string
+          default: M30
+          enum:
+            - M1
+            - M3
+            - M5
+            - M15
+            - M30
+            - H1
+            - H4
+            - D1
+            - D7
+            - 1M
+        - name: sort
+          in: query
+          type: string
+          description: Sort direction
+          default: ASC
+          required: false
+          enum:
+            - DESC
+            - ASC
+        - name: from
+          in: query
+          type: string
+          description: Datetime in iso format or timestamp in millisecond
+        - name: till
+          in: query
+          type: string
+          description: Datetime in iso format or timestamp in millisecond
+        - name: limit
+          in: query
+          type: integer
+          default: 100
+          minimum: 1
+          maximum: 1000
+          format: int32
+          description: Allowed from 1 to 1000
+        - name: offset
+          in: query
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100000
+          description: Allowed from 0 to 100000
+      tags:
+        - Public
+      responses:
+        '200':
+          description: List of candles
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Candle'
+        '400':
+          description: No such symbol
+          schema:
+            $ref: '#/definitions/Error'
+  /order:
+    get:
+      summary: List your current open orders
+      description: List of your currently open orders.
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: symbol
+          in: query
+          type: string
+          required: false
+      tags:
+        - Trading
+      responses:
+        '200':
+          description: List of active orders
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Order'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create new order
+      security:
+        - BasicAuth: []
+      tags:
+        - Trading
+      consumes:
+        - application/x-www-form-urlencoded
+        - application/json
+      parameters:
+        - name: clientOrderId
+          in: formData
+          type: string
+        - name: symbol
+          in: formData
+          type: string
+          required: true
+        - name: side
+          in: formData
+          required: true
+          default: sell
+          type: string
+          enum:
+            - sell
+            - buy
+        - name: type
+          in: formData
+          type: string
+          default: limit
+          enum:
+            - limit
+            - market
+            - stopLimit
+            - stopMarket
+        - name: timeInForce
+          in: formData
+          type: string
+          default: GTC
+          enum:
+            - GTC
+            - IOC
+            - FOK
+            - Day
+            - GTD
+        - name: quantity
+          in: formData
+          type: string
+          required: true
+        - name: price
+          in: formData
+          type: string
+        - name: stopPrice
+          in: formData
+          type: string
+        - name: expireTime
+          in: formData
+          type: string
+          format: date-time
+        - name: strictValidate
+          in: formData
+          description: Strict validate amount and price precision without rounding
+          type: boolean
+          default: false
+        - name: postOnly
+          in: formData
+          description: "A Post-Only Order is an order that does not remove liquidity. If your post-only order would cause a match with a pre-existing order as a taker, then\_order will be canceled"
+          type: boolean
+          default: false
+        - name: takeLiquidityMarkup
+          in: formData
+          description: >-
+            Optional liquidity taker fee, a fraction of order volume, such as
+            0.001 (for 0.1% fee)
+          type: string
+        - name: provideLiquidityMarkup
+          in: formData
+          description: >-
+            Optional liquidity provider fee, a fraction of order volume, such as
+            0.001 (for 0.1% fee)
+          type: string
+      responses:
+        '200':
+          description: Success order create
+          schema:
+            $ref: '#/definitions/Order'
+        '400':
+          description: Validation error
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization required
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Cancel all open orders
+      security:
+        - BasicAuth: []
+      consumes:
+        - application/x-www-form-urlencoded
+      parameters:
+        - name: symbol
+          in: formData
+          type: string
+          required: false
+      tags:
+        - Trading
+      responses:
+        '200':
+          description: Canceled orders
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Order'
+        '401':
+          description: Authorization required
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  '/order/{clientOrderId}':
+    get:
+      summary: Get a single order by clientOrderId
+      description: Get a single order by clientOrderId
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: clientOrderId
+          in: path
+          type: string
+          required: true
+        - name: wait
+          in: query
+          type: integer
+          format: int32
+          required: false
+          description: Long polling wait timeout in milliseconds. Max 60000.
+      tags:
+        - Trading
+      responses:
+        '200':
+          description: Active order
+          schema:
+            $ref: '#/definitions/Order'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Create new order
+      consumes:
+        - application/x-www-form-urlencoded
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: clientOrderId
+          in: path
+          type: string
+          required: true
+        - name: symbol
+          in: formData
+          type: string
+          required: true
+        - name: side
+          in: formData
+          required: true
+          default: sell
+          type: string
+          enum:
+            - sell
+            - buy
+        - name: type
+          in: formData
+          type: string
+          default: limit
+          enum:
+            - limit
+            - market
+            - stopLimit
+            - stopMarket
+        - name: timeInForce
+          in: formData
+          type: string
+          required: true
+          default: GTC
+          enum:
+            - GTC
+            - IOC
+            - FOK
+            - Day
+            - GTD
+        - name: quantity
+          in: formData
+          type: string
+          required: true
+        - name: price
+          in: formData
+          type: string
+        - name: stopPrice
+          in: formData
+          type: string
+        - name: expireTime
+          in: formData
+          type: string
+          format: date-time
+        - name: strictValidate
+          in: formData
+          description: Strict validate amount and price precision without rounding
+          type: boolean
+          default: false
+        - name: postOnly
+          in: formData
+          description: "A Post-Only Order is an order that does not remove liquidity. If your post-only order would cause a match with a pre-existing order as a taker, then\_order will be canceled"
+          type: boolean
+          default: false
+        - name: takeLiquidityMarkup
+          in: formData
+          description: >-
+            Optional liquidity taker fee, a fraction of order volume, such as
+            0.001 (for 0.1% fee)
+          type: string
+        - name: provideLiquidityMarkup
+          in: formData
+          description: >-
+            Optional liquidity provider fee, a fraction of order volume, such as
+            0.001 (for 0.1% fee)
+          type: string
+      tags:
+        - Trading
+      responses:
+        '200':
+          description: Order
+          schema:
+            $ref: '#/definitions/Order'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Cancel order
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: clientOrderId
+          in: path
+          type: string
+          required: true
+      tags:
+        - Trading
+      responses:
+        '200':
+          description: Canceled order
+          schema:
+            $ref: '#/definitions/Order'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      summary: Cancel Replace order
+      consumes:
+        - application/x-www-form-urlencoded
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: clientOrderId
+          in: path
+          type: string
+          required: true
+        - name: quantity
+          in: formData
+          type: string
+          required: true
+        - name: price
+          in: formData
+          type: string
+        - name: requestClientId
+          in: formData
+          type: string
+          required: true
+      tags:
+        - Trading
+      responses:
+        '200':
+          description: Replaced order
+          schema:
+            $ref: '#/definitions/Order'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /margin/order:
+    get:
+      summary: List your current open margin orders
+      description: List of your currently open margin orders.
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: symbol
+          in: query
+          type: string
+          required: false
+      tags:
+        - MarginTrading
+      responses:
+        '200':
+          description: List of active orders
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Order'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create new margin order
+      security:
+        - BasicAuth: []
+      tags:
+        - MarginTrading
+      consumes:
+        - application/x-www-form-urlencoded
+        - application/json
+      parameters:
+        - name: clientOrderId
+          in: formData
+          type: string
+        - name: symbol
+          in: formData
+          type: string
+          required: true
+        - name: side
+          in: formData
+          required: true
+          default: sell
+          type: string
+          enum:
+            - sell
+            - buy
+        - name: type
+          in: formData
+          type: string
+          default: limit
+          enum:
+            - limit
+            - market
+            - stopLimit
+            - stopMarket
+        - name: timeInForce
+          in: formData
+          type: string
+          default: GTC
+          enum:
+            - GTC
+            - IOC
+            - FOK
+            - Day
+            - GTD
+        - name: quantity
+          in: formData
+          type: string
+          required: true
+        - name: price
+          in: formData
+          type: string
+        - name: stopPrice
+          in: formData
+          type: string
+        - name: expireTime
+          in: formData
+          type: string
+          format: date-time
+        - name: strictValidate
+          in: formData
+          description: Strict validate amount and price precision without rounding
+          type: boolean
+          default: false
+        - name: postOnly
+          in: formData
+          description: "A Post-Only Order is an order that does not remove liquidity. If your post-only order would cause a match with a pre-existing order as a taker, then\_order will be canceled"
+          type: boolean
+          default: false
+        - name: takeLiquidityMarkup
+          in: formData
+          description: >-
+            Optional liquidity taker fee, a fraction of order volume, such as
+            0.001 (for 0.1% fee)
+          type: string
+        - name: provideLiquidityMarkup
+          in: formData
+          description: >-
+            Optional liquidity provider fee, a fraction of order volume, such as
+            0.001 (for 0.1% fee)
+          type: string
+      responses:
+        '200':
+          description: Success order create
+          schema:
+            $ref: '#/definitions/Order'
+        '400':
+          description: Validation error
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization required
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Cancel all open margin orders
+      security:
+        - BasicAuth: []
+      consumes:
+        - application/x-www-form-urlencoded
+        - application/json
+      parameters:
+        - name: symbol
+          in: formData
+          type: string
+          required: false
+      tags:
+        - MarginTrading
+      responses:
+        '200':
+          description: Canceled orders
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Order'
+        '401':
+          description: Authorization required
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  '/margin/order/{clientOrderId}':
+    get:
+      summary: Get a single margin order by clientOrderId
+      description: Return single margin order
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: clientOrderId
+          in: path
+          type: string
+          required: true
+      tags:
+        - MarginTrading
+      responses:
+        '200':
+          description: Active order
+          schema:
+            $ref: '#/definitions/Order'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Create a new margin order
+      description: Create a new margin order and take clientOrderId from the path
+      consumes:
+        - application/x-www-form-urlencoded
+        - application/json
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: clientOrderId
+          in: path
+          type: string
+          required: true
+        - name: symbol
+          in: formData
+          type: string
+          required: true
+        - name: side
+          in: formData
+          required: true
+          default: sell
+          type: string
+          enum:
+            - sell
+            - buy
+        - name: type
+          in: formData
+          type: string
+          default: limit
+          enum:
+            - limit
+            - market
+            - stopLimit
+            - stopMarket
+        - name: timeInForce
+          in: formData
+          type: string
+          required: true
+          default: GTC
+          enum:
+            - GTC
+            - IOC
+            - FOK
+            - Day
+            - GTD
+        - name: quantity
+          in: formData
+          type: string
+          required: true
+        - name: price
+          in: formData
+          type: string
+        - name: stopPrice
+          in: formData
+          type: string
+        - name: expireTime
+          in: formData
+          type: string
+          format: date-time
+        - name: strictValidate
+          in: formData
+          description: Strict validate amount and price precision without rounding
+          type: boolean
+          default: false
+        - name: postOnly
+          in: formData
+          description: "A Post-Only Order is an order that does not remove liquidity. If your post-only order would cause a match with a pre-existing order as a taker, then\_order will be canceled"
+          type: boolean
+          default: false
+        - name: takeLiquidityMarkup
+          in: formData
+          description: >-
+            Optional liquidity taker fee, a fraction of order volume, such as
+            0.001 (for 0.1% fee)
+          type: string
+        - name: provideLiquidityMarkup
+          in: formData
+          description: >-
+            Optional liquidity provider fee, a fraction of order volume, such as
+            0.001 (for 0.1% fee)
+          type: string
+      tags:
+        - MarginTrading
+      responses:
+        '200':
+          description: Order
+          schema:
+            $ref: '#/definitions/Order'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Cancel a margin order
+      consumes:
+        - application/x-www-form-urlencoded
+        - application/json
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: clientOrderId
+          in: path
+          type: string
+          required: true
+      tags:
+        - MarginTrading
+      responses:
+        '200':
+          description: Canceled order
+          schema:
+            $ref: '#/definitions/Order'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      summary: Cancel-Replace margin order
+      consumes:
+        - application/x-www-form-urlencoded
+        - application/json
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: clientOrderId
+          in: path
+          type: string
+          required: true
+        - name: quantity
+          in: formData
+          type: string
+          required: true
+        - name: price
+          in: formData
+          type: string
+        - name: requestClientId
+          in: formData
+          type: string
+          required: true
+      tags:
+        - MarginTrading
+      responses:
+        '200':
+          description: Replaced order
+          schema:
+            $ref: '#/definitions/Order'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /margin/account:
+    get:
+      summary: List your current margin accounts
+      security:
+        - BasicAuth: []
+      tags:
+        - MarginAccount
+      responses:
+        '200':
+          description: List of margin accounts
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/MarginAccount'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Close all margin accounts with their positions
+      security:
+        - BasicAuth: []
+      consumes:
+        - application/x-www-form-urlencoded
+        - application/json
+      tags:
+        - MarginAccount
+      responses:
+        '200':
+          description: List of margin accounts
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/MarginAccount'
+        '401':
+          description: Authorization required
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  '/margin/account/{symbol}':
+    get:
+      summary: Get margin account by symbol
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: symbol
+          in: path
+          type: string
+          required: true
+      tags:
+        - MarginAccount
+      responses:
+        '200':
+          description: Margin account
+          schema:
+            $ref: '#/definitions/MarginAccount'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Set up a margin account and reserve margin balance for it
+      consumes:
+        - application/x-www-form-urlencoded
+        - application/json
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: symbol
+          in: path
+          type: string
+          required: true
+        - name: marginBalance
+          in: formData
+          type: string
+          format: double
+          required: true
+          description: amount of currency to reserve for margin trading purposes.
+        - name: strictValidate
+          in: formData
+          type: boolean
+          required: false
+          default: falase
+          description: force stric validate margin value
+      tags:
+        - MarginAccount
+      responses:
+        '200':
+          description: Updated margin account
+          schema:
+            $ref: '#/definitions/MarginAccount'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Close the margin account with their position
+      consumes:
+        - application/x-www-form-urlencoded
+        - application/json
+      security:
+        - BasicAuth: []
+      tags:
+        - MarginAccount
+      responses:
+        '200':
+          description: Position
+          schema:
+            $ref: '#/definitions/MarginAccount'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /margin/position:
+    get:
+      summary: All open position
+      consumes:
+        - application/x-www-form-urlencoded
+        - application/json
+      security:
+        - BasicAuth: []
+      tags:
+        - MarginAccount
+      responses:
+        '200':
+          description: Position
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/MarginPosition'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Close all open position
+      consumes:
+        - application/x-www-form-urlencoded
+        - application/json
+      security:
+        - BasicAuth: []
+      tags:
+        - MarginAccount
+      responses:
+        '200':
+          description: Position
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/MarginPosition'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  '/margin/position/{symbol}':
+    get:
+      summary: Open position for a symbol
+      consumes:
+        - application/x-www-form-urlencoded
+        - application/json
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: symbol
+          in: path
+          type: string
+          required: true
+      tags:
+        - MarginAccount
+      responses:
+        '200':
+          description: Position
+          schema:
+            $ref: '#/definitions/MarginPosition'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Close the position for a symbol
+      consumes:
+        - application/x-www-form-urlencoded
+        - application/json
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: symbol
+          in: path
+          type: string
+          required: true
+        - name: price
+          in: formData
+          type: string
+          format: double
+          required: false
+          description: 'optional close price, if price not provided, then close by market'
+        - name: strictValidate
+          in: formData
+          type: boolean
+          required: false
+          default: falase
+          description: force stric validate price value
+      tags:
+        - MarginAccount
+      responses:
+        '200':
+          description: Position
+          schema:
+            $ref: '#/definitions/MarginPosition'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /trading/balance:
+    get:
+      tags:
+        - Trading
+      summary: Get trading balance
+      security:
+        - BasicAuth: []
+      responses:
+        '200':
+          description: Array of balances
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Balance'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  '/trading/fee/{symbol}':
+    get:
+      tags:
+        - Trading
+      summary: Get trading fee rate
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: symbol
+          in: path
+          type: string
+          required: true
+      responses:
+        '200':
+          description: Trading fee rates
+          schema:
+            $ref: '#/definitions/TradingFee'
+  /history/trades:
+    get:
+      summary: Get historical trades
+      security:
+        - BasicAuth: []
+      tags:
+        - Trading History
+      parameters:
+        - name: symbol
+          in: query
+          type: string
+          required: false
+        - name: sort
+          in: query
+          type: string
+          description: Sort direction
+          default: DESC
+          required: false
+          enum:
+            - DESC
+            - ASC
+        - name: by
+          in: query
+          type: string
+          description: Filter field
+          default: id
+          required: false
+          enum:
+            - timestamp
+            - id
+        - name: from
+          in: query
+          type: string
+          description: >-
+            If filter by timestamp, then datetime in iso format or timestamp in
+            millisecond otherwise trade id
+        - name: till
+          in: query
+          type: string
+          description: >-
+            If filter by timestamp, then datetime in iso format or timestamp in
+            millisecond otherwise trade id
+        - name: limit
+          in: query
+          type: integer
+          default: 100
+          minimum: 1
+          maximum: 1000
+          format: int32
+        - name: offset
+          in: query
+          type: integer
+          format: int32
+        - name: margin
+          in: query
+          type: string
+          description: Controls inclusion of marginal trades
+          required: false
+          enum:
+            - include
+            - only
+            - ignore
+      responses:
+        '200':
+          description: List of trades
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Trade'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /history/order:
+    get:
+      tags:
+        - Trading History
+      summary: Get historical orders
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: symbol
+          in: query
+          type: string
+          required: false
+        - name: from
+          in: query
+          type: string
+          description: Datetime in iso format or timestamp in millisecond.
+        - name: till
+          in: query
+          type: string
+          description: Datetime in iso format or timestamp in millisecond.
+        - name: limit
+          in: query
+          type: integer
+          default: 100
+          minimum: 1
+          maximum: 1000
+          format: int32
+        - name: offset
+          in: query
+          type: integer
+          format: int32
+        - name: clientOrderId
+          in: query
+          type: string
+      responses:
+        '200':
+          description: List of orders
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Order'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  '/history/order/{id}/trades':
+    get:
+      tags:
+        - Trading History
+      summary: Get historical trades by specified order
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          type: integer
+          required: true
+      responses:
+        '200':
+          description: List of trades by order
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Trade'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /account/balance:
+    get:
+      tags:
+        - Account
+      summary: Get main acccount balance
+      security:
+        - BasicAuth: []
+      responses:
+        '200':
+          description: Array of main balances
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Balance'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /account/transactions:
+    get:
+      tags:
+        - Account
+      summary: Get account transactions
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: currency
+          in: query
+          type: string
+        - name: sort
+          in: query
+          type: string
+          description: Sort direction
+          default: DESC
+          required: false
+          enum:
+            - DESC
+            - ASC
+        - name: by
+          in: query
+          type: string
+          description: Filter field
+          default: timestamp
+          required: false
+          enum:
+            - timestamp
+            - index
+        - name: from
+          in: query
+          type: string
+          description: 'Datetime in iso format or timestamp in millisecond, or index.'
+        - name: till
+          in: query
+          type: string
+          description: 'Datetime in iso format or timestamp in millisecond, or index.'
+        - name: limit
+          in: query
+          type: integer
+          default: 100
+          minimum: 1
+          maximum: 1000
+          format: int32
+        - name: offset
+          in: query
+          type: integer
+          format: int32
+      responses:
+        '200':
+          description: Array of transactions
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Transaction'
+  '/account/transactions/{id}':
+    get:
+      tags:
+        - Account
+      summary: Get account transaction by id
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+      responses:
+        '200':
+          description: One transaction
+          schema:
+            $ref: '#/definitions/Transaction'
+  /account/crypto/withdraw:
+    post:
+      tags:
+        - Account
+      summary: Withdraw crypro
+      consumes:
+        - application/x-www-form-urlencoded
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: currency
+          in: formData
+          type: string
+          required: true
+        - name: amount
+          in: formData
+          type: string
+          required: true
+        - name: address
+          in: formData
+          type: string
+          required: true
+        - name: paymentId
+          in: formData
+          type: string
+        - name: includeFee
+          in: formData
+          type: boolean
+          default: false
+          description: 'If enabled, then fee will be subtracted from amount.'
+        - name: autoCommit
+          in: formData
+          type: boolean
+          default: true
+          description: >-
+            If Auto commit disabled you should commit it or rollback within 1
+            hour. After expires 1 hour, the transaction will automatically be
+            rolled back.
+        - name: useOffchain
+          in: formData
+          type: string
+          enum:
+            - never
+            - optionally
+            - required
+          default: never
+          description: >-
+            Allow create internal offchain transfer (fast, no fees, no hash). If
+            required selected, then only offchain transaction can be created.
+        - name: feeLevelId
+          in: formData
+          type: integer
+          description: >-
+            Allows you to select the desired commission level. (The level
+            affects the speed of transactions).
+        - name: publicComment
+          in: formData
+          type: string
+          description: Allows you add comment to transaction.
+      responses:
+        '200':
+          description: Transaction Id
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+            required:
+              - id
+  '/account/crypto/withdraw/{id}':
+    put:
+      tags:
+        - Account
+      summary: Commit withdraw crypro
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+      responses:
+        '200':
+          description: Commit result
+          schema:
+            $ref: '#/definitions/WithdrawConfirm'
+    delete:
+      tags:
+        - Account
+      summary: Rollback withdraw crypro
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+      responses:
+        '200':
+          description: Rollback result
+          schema:
+            $ref: '#/definitions/WithdrawConfirm'
+  /account/crypto/check-offchain-available:
+    post:
+      tags:
+        - Account
+      summary: Check that offchain payout is avialable for a destination address
+      security:
+        - BasicAuth: []
+      consumes:
+        - application/x-www-form-urlencoded
+      parameters:
+        - name: currency
+          in: formData
+          type: string
+          required: true
+        - name: address
+          in: formData
+          type: string
+          required: true
+        - name: paymentId
+          in: formData
+          type: string
+      responses:
+        '200':
+          description: Check result
+          schema:
+            $ref: '#/definitions/WithdrawConfirm'
+  /account/crypto/transfer-convert:
+    post:
+      tags:
+        - Account
+      summary: Transfer convert between currencies
+      consumes:
+        - application/x-www-form-urlencoded
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: fromCurrency
+          in: formData
+          type: string
+          required: true
+        - name: toCurrency
+          in: formData
+          type: string
+          required: true
+        - name: amount
+          in: formData
+          type: string
+          required: true
+      responses:
+        '200':
+          description: Commit result
+          schema:
+            $ref: '#/definitions/ConvertTransfer'
+  /account/crypto/estimate-withdraw:
+    get:
+      tags:
+        - Account
+      summary: Estimates fee for withdraw
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: currency
+          in: query
+          type: string
+          required: true
+        - name: amount
+          in: query
+          type: number
+          required: true
+      responses:
+        '200':
+          description: Estimate result
+          schema:
+            $ref: '#/definitions/EstimatePayout'
+  /account/crypto/estimate-withdraw-levels:
+    get:
+      tags:
+        - Account
+      summary: Estimates fee levels for withdraw
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: currency
+          in: query
+          type: string
+          required: true
+        - name: amount
+          in: query
+          type: number
+          required: true
+      responses:
+        '200':
+          description: Estimate result
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/EstimatePayoutFeeLevels'
+  '/account/crypto/is-mine/{address}':
+    get:
+      tags:
+        - Account
+      summary: Check if crypto adress belongs to current user
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: address
+          in: path
+          type: string
+          required: true
+      responses:
+        '200':
+          description: Check result
+          schema:
+            $ref: '#/definitions/AddressIsMineCheck'
+  '/account/crypto/address/{currency}':
+    get:
+      tags:
+        - Account
+      summary: Get deposit crypro address
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: currency
+          in: path
+          type: string
+          required: true
+      responses:
+        '200':
+          description: Crypto address for deposit
+          schema:
+            $ref: '#/definitions/Address'
+    post:
+      tags:
+        - Account
+      summary: Create new deposit crypro address
+      consumes:
+        - application/x-www-form-urlencoded
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: currency
+          in: path
+          type: string
+          required: true
+      responses:
+        '200':
+          description: Crypto address for deposit
+          schema:
+            $ref: '#/definitions/Address'
+  '/account/crypto/addresses/{currency}':
+    get:
+      tags:
+        - Account
+      summary: Get last 10 deposit crypto addresses
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: currency
+          in: path
+          type: string
+          required: true
+      responses:
+        '200':
+          description: List of crypto addresses for deposit
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Address'
+  '/account/crypto/used-addresses/{currency}':
+    get:
+      tags:
+        - Account
+      summary: Get last 10 unique payout addresses
+      parameters:
+        - name: currency
+          in: path
+          type: string
+          required: true
+      responses:
+        '200':
+          description: List of payout addresses
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/PayoutCryptoAddress'
+  /account/transfer:
+    post:
+      tags:
+        - Account
+      summary: Transfer amount to trading
+      consumes:
+        - application/x-www-form-urlencoded
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: currency
+          in: formData
+          type: string
+          required: true
+        - name: amount
+          in: formData
+          type: string
+          required: true
+        - name: type
+          in: formData
+          type: string
+          required: true
+          enum:
+            - bankToExchange
+            - exchangeToBank
+      responses:
+        '200':
+          description: Transaction Id
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+            required:
+              - id
+  /account/transfer/internal:
+    post:
+      tags:
+        - Account
+      summary: Transfer money to another user by email or username
+      consumes:
+        - application/x-www-form-urlencoded
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: currency
+          in: formData
+          type: string
+          required: true
+        - name: amount
+          in: formData
+          type: string
+          required: true
+        - name: by
+          in: formData
+          type: string
+          required: true
+          enum:
+            - email
+            - username
+        - name: identifier
+          in: formData
+          type: string
+          required: true
+      responses:
+        '200':
+          description: Transaction Id
+          schema:
+            type: object
+            properties:
+              result:
+                type: string
+            required:
+              - result
+  /sub-acc:
+    get:
+      tags:
+        - Sub-Accounts
+      summary: Get sub-accounts list
+      security:
+        - BasicAuth: []
+      responses:
+        '200':
+          description: Sub-accounts list
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/SubAccount'
+  /sub-acc/freeze:
+    post:
+      tags:
+        - Sub-Accounts
+      summary: Freeze sub-accounts
+      consumes:
+        - application/x-www-form-urlencoded
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: ids
+          in: formData
+          type: string
+          required: true
+          description: 'subAccount userIds separate by '','''
+      responses:
+        '200':
+          description: Succes result
+          schema:
+            type: object
+            properties:
+              result:
+                type: boolean
+  /sub-acc/activate:
+    post:
+      tags:
+        - Sub-Accounts
+      summary: Activate sub-accounts
+      consumes:
+        - application/x-www-form-urlencoded
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: ids
+          in: formData
+          type: string
+          required: true
+          description: 'subAccount userIds separate by '','''
+      responses:
+        '200':
+          description: Succes result
+          schema:
+            type: object
+            properties:
+              result:
+                type: boolean
+  /sub-acc/transfer:
+    post:
+      tags:
+        - Sub-Accounts
+      summary: Transfer from main to sub-account or from sub-account to main
+      consumes:
+        - application/x-www-form-urlencoded
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: subAccountId
+          in: formData
+          type: integer
+          required: true
+        - name: amount
+          in: formData
+          type: string
+          required: true
+        - name: currency
+          in: formData
+          type: string
+          required: true
+        - name: type
+          in: formData
+          type: string
+          required: true
+          enum:
+            - deposit
+            - withdraw
+      responses:
+        '200':
+          description: transaction id
+          schema:
+            type: object
+            properties:
+              result:
+                type: string
+  /sub-acc/acl:
+    get:
+      tags:
+        - Sub-Accounts
+      summary: sub account withdraw setting list
+      consumes:
+        - application/x-www-form-urlencoded
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: subAccountIds
+          in: query
+          type: string
+          required: true
+          description: 'subAccount userIds separate by '','''
+      responses:
+        '200':
+          description: Sub-accounts Acl list
+          schema:
+            type: object
+            properties:
+              result:
+                type: array
+                items:
+                  $ref: '#/definitions/SubAccountAcl'
+  '/sub-acc/acl/:subAccountUserID':
+    put:
+      tags:
+        - Sub-Accounts
+      summary: disable or enable withdraw for sub-accounts
+      consumes:
+        - application/x-www-form-urlencoded
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: subAccountUserID
+          in: path
+          type: string
+          required: true
+          description: 'subAccount userIds separate by '','''
+        - name: isPayoutEnabled
+          in: formData
+          type: boolean
+          description: is withdrow enabled for sub-accounts
+        - name: description
+          type: string
+          in: formData
+          required: true
+          description: description
+      responses:
+        '200':
+          description: Sub-accounts Acl list
+          schema:
+            type: object
+            properties:
+              result:
+                type: array
+                items:
+                  $ref: '#/definitions/SubAccountAcl'
+  '/sub-acc/balance/:subAccountUserID':
+    get:
+      tags:
+        - Sub-Accounts
+      summary: get main and tradin sub-account balances
+      consumes:
+        - application/x-www-form-urlencoded
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: subAccountUserID
+          type: integer
+          in: path
+          required: true
+      responses:
+        '200':
+          description: Sub-accounts main and trading balances
+          schema:
+            type: object
+            properties:
+              result:
+                type: array
+                items:
+                  $ref: '#/definitions/SubAccountBalance'
+  '/sub-acc/deposit-address/:subAccountUserID/:currency':
+    get:
+      tags:
+        - Sub-Accounts
+      summary: get sub-account crypto address
+      consumes:
+        - application/x-www-form-urlencoded
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: subAccountUserID
+          type: integer
+          in: path
+          required: true
+        - name: currency
+          in: path
+          type: string
+          required: true
+      responses:
+        '200':
+          description: sub-account crypto address
+          schema:
+            $ref: '#/definitions/Address'
+definitions:
+  Currency:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Currency code
+      fullName:
+        type: string
+      crypto:
+        type: boolean
+        description: 'True for cryptocurrencies, false for fiat, ICO and others.'
+      payinEnabled:
+        type: boolean
+        description: >-
+          True if cryptocurrency support generate adress or paymentId for
+          deposits
+      payinPaymentId:
+        type: boolean
+        description: True if cryptocurrency requred use paymentId for deposits
+      payinConfirmations:
+        type: integer
+        description: Confirmations count for cryptocurrency deposits
+      payoutEnabled:
+        type: boolean
+      payoutFee:
+        type: string
+        description: Default withdraw fee
+      payoutIsPaymentId:
+        type: boolean
+        description: True if cryptocurrency allow use paymentId for withdraw
+      delisted:
+        type: boolean
+        description: True if currency delisted (stopped deposit and trading)
+      transferEnabled:
+        type: boolean
+      payoutMinimalAmount:
+        type: string
+        description: Minimum withdraw amount
+      precisionPayout:
+        type: integer
+        description: >-
+          Currency precision for payout (number of digits after the decimal
+          point)
+      precisionTransfer:
+        type: integer
+        description: >-
+          Currency precision for transfer (number of digits after the decimal
+          point)
+    required:
+      - id
+      - fullName
+      - crypto
+      - payinEnabled
+      - payinPaymentId
+      - payinConfirmations
+      - payoutEnabled
+      - payoutFee
+      - payoutIsPaymentId
+      - payoutMinimalAmount
+      - precisionPayout
+      - precisionTransfer
+      - delisted
+      - transferEnabled
+  Balance:
+    type: object
+    properties:
+      currency:
+        type: string
+      available:
+        type: string
+        description: Amount available to spend
+      reserved:
+        type: string
+        description: Amount reserved on orders or payout
+  Ticker:
+    type: object
+    properties:
+      symbol:
+        type: string
+      ask:
+        type: string
+        description: Best ASK.
+      bid:
+        type: string
+        description: Best BID.
+      last:
+        type: string
+        description: Last trade price
+      low:
+        type: string
+        description: Min trade price of the last 24 hours.
+      high:
+        type: string
+        description: Max trade price of the last 24 hours.
+      open:
+        type: string
+        description: Trade price 24 hours ago.
+      volume:
+        type: string
+        description: Trading volume in commoduty currency of the last 24 hours.
+      volumeQuoute:
+        type: string
+        description: Trading volume in currency of the last 24 hours.
+      timestamp:
+        type: string
+        format: date-time
+        description: Actual timestamp.
+  PublicTrade:
+    type: object
+    properties:
+      id:
+        type: integer
+      price:
+        type: string
+      quantity:
+        type: string
+      side:
+        type: string
+        enum:
+          - sell
+          - buy
+      timestamp:
+        type: string
+        format: date-time
+    example:
+      id: 76502536
+      price: '0.012285'
+      quantity: '6.754'
+      side: sell
+      timestamp: '2017-01-10T12:00:00.672Z'
+  Orderbook:
+    type: object
+    properties:
+      ask:
+        type: array
+        items:
+          type: object
+          properties:
+            price:
+              type: string
+            size:
+              type: string
+        example:
+          price: '0.012285'
+          size: '6.754'
+      bid:
+        type: array
+        items:
+          type: object
+          properties:
+            price:
+              type: string
+            size:
+              type: string
+        example:
+          price: '0.012106'
+          size: '43.167'
+      timestamp:
+        type: string
+        format: date-time
+      askAveragePrice:
+        type: string
+        description: >-
+          Ask average price for specified volume. Optional (only for volume
+          requests)
+      bidAveragePrice:
+        type: string
+        description: >-
+          Bid average price for specified volume. Optional (only for volume
+          requests)
+  TradingFee:
+    type: object
+    properties:
+      takeLiquidityRate:
+        type: string
+      provideLiquidityRate:
+        type: string
+    required:
+      - takeLiquidityRate
+      - provideLiquidityRate
+  Symbol:
+    type: object
+    properties:
+      id:
+        type: string
+      baseCurrency:
+        type: string
+      quoteCurrency:
+        type: string
+      quantityIncrement:
+        type: string
+      tickSize:
+        type: string
+        description: A tick size is the minimum price movement of a trading instrument.
+      takeLiquidityRate:
+        type: string
+      provideLiquidityRate:
+        type: string
+      feeCurrency:
+        type: string
+    required:
+      - id
+      - baseCurrency
+      - quoteCurrency
+      - quantityIncrement
+      - tickSize
+    example:
+      id: ETHBTC
+      baseCurrency: ETH
+      quoteCurrency: BTC
+      quantityIncrement: 0.001
+      tickSize: 0.000001
+      takeLiquidityRate: 0.001
+      provideLiquidityRate: -0.0001
+      feeCurrency: BTC
+  Order:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      clientOrderId:
+        type: string
+      symbol:
+        type: string
+      side:
+        type: string
+        enum:
+          - sell
+          - buy
+      status:
+        type: string
+        enum:
+          - new
+          - suspended
+          - partiallyFilled
+          - filled
+          - canceled
+          - expired
+      type:
+        type: string
+        enum:
+          - limit
+          - market
+          - stopLimit
+          - stopMarket
+      timeInForce:
+        type: string
+        enum:
+          - GTC
+          - IOC
+          - FOK
+          - Day
+          - GTD
+      quantity:
+        type: string
+      price:
+        type: string
+      avgPrice:
+        type: string
+      cumQuantity:
+        type: string
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+      postOnly:
+        type: boolean
+      stopPrice:
+        type: string
+      expireTime:
+        type: string
+        format: date-time
+      positionId:
+        type: number
+        description: Margin position
+      tradesReport:
+        type: object
+        properties:
+          id:
+            type: integer
+            format: int64
+          quantity:
+            type: string
+          price:
+            type: string
+          fee:
+            type: string
+          timestamp:
+            type: string
+            format: date-time
+    required:
+      - id
+      - clientOrderId
+      - symbol
+      - side
+      - status
+      - type
+      - timeInForce
+      - quantity
+      - createdAt
+      - updatedAt
+    example:
+      id: 828680665
+      clientOrderId: f4307c6e507e49019907c917b6d7a084
+      symbol: ETHBTC
+      side: sell
+      status: partiallyFilled
+      type: limit
+      timeInForce: GTC
+      price: '0.011384'
+      quantity: '13.942'
+      postOnly: false
+      cumQuantity: '5.240'
+      createdAt: '2017-01-16T14:18:47.321Z'
+      updatedAt: '2017-01-19T15:23:54.876Z'
+  Trade:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      clientOrderId:
+        type: string
+      orderId:
+        type: integer
+        format: int64
+      symbol:
+        type: string
+      side:
+        type: string
+        enum:
+          - sell
+          - buy
+      quantity:
+        type: string
+      fee:
+        type: string
+      price:
+        type: string
+      positionId:
+        type: number
+        description: Margin position
+      pnl:
+        type: string
+        format: double
+        description: Margin profit or loss in currency
+      timestamp:
+        type: string
+        format: date-time
+      liquidation:
+        type: boolean
+      taker:
+        type: boolean
+    required:
+      - id
+      - clientOrderId
+      - orderId
+      - symbol
+      - side
+      - quantity
+      - fee
+      - price
+      - timestamp
+      - taker
+  MarginAccount:
+    type: object
+    properties:
+      symbol:
+        type: string
+      leverage:
+        type: string
+        format: double
+        description: margin leverage value
+      marginBalance:
+        type: string
+        format: double
+        description: Amount of limited and reserved balance for margin trading purpose
+      marginBalanceOrders:
+        type: string
+        format: double
+      marginBalanceRequired:
+        type: string
+        format: double
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+      position:
+        type: object
+        $ref: '#/definitions/MarginPosition'
+    required:
+      - symbol
+      - leverage
+      - marginBalance
+      - marginBalanceOrders
+      - marginBalanceRequired
+      - createdAt
+      - updatedAt
+    example:
+      symbol: ETHBTC
+      leverage: '10.00'
+      marginBalance: '0.5'
+      marginBalanceOrders: '0.345'
+      marginBalanceRequired: '0.145'
+      createdAt: '2017-01-16T14:18:47.321Z'
+      updatedAt: '2017-01-19T15:23:54.876Z'
+      position:
+        id: 73456983
+        symbol: ETHBTC
+        quantity: '4.450'
+        pnl: '-0.00046'
+        priceEntry: '0.017667'
+        priceMarginCall: '0.012664'
+        priceLiquidation: '0.012361'
+        createdAt: '2017-01-16T14:18:47.321Z'
+        updatedAt: '2017-01-19T15:23:54.876Z'
+  MarginPosition:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      symbol:
+        type: string
+      quantity:
+        type: string
+        format: double
+      pnl:
+        type: string
+        format: double
+        description: cumulative profit and loss (quoted in the currency of the symbol)
+      priceEntry:
+        type: string
+        format: double
+        description: position first trade price
+      priceMarginCall:
+        type: string
+        format: double
+      priceLiquidation:
+        type: string
+        format: double
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+    required:
+      - id
+      - symbol
+      - quantity
+      - pnl
+      - priceEntry
+      - priceMarginCall
+      - priceLiquidation
+      - createdAt
+      - updatedAt
+    example:
+      id: 73456983
+      symbol: ETHBTC
+      quantity: '4.450'
+      pnl: '-0.00046'
+      priceEntry: '0.017667'
+      priceMarginCall: '0.012664'
+      priceLiquidation: '0.012361'
+      createdAt: '2017-01-16T14:18:47.321Z'
+      updatedAt: '2017-01-19T15:23:54.876Z'
+  Transaction:
+    type: object
+    properties:
+      id:
+        type: string
+      index:
+        type: string
+      currency:
+        type: string
+      amount:
+        type: string
+      fee:
+        type: string
+      address:
+        type: string
+      paymentId:
+        type: string
+      hash:
+        type: string
+      status:
+        type: string
+        enum:
+          - created
+          - pending
+          - failed
+          - success
+      type:
+        type: string
+        enum:
+          - payout
+          - payin
+          - deposit
+          - withdraw
+          - bankToExchange
+          - exchangeToBank
+      subType:
+        type: string
+        enum:
+          - offchain
+          - swap
+      offchainId:
+        type: string
+      confirmations:
+        type: number
+      publicComment:
+        type: string
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+      errorCode:
+        type: string
+        enum:
+          - INVALID_ADDRESS
+          - INVALID_PAYMENT_ID
+          - BAD_PRECISION
+    required:
+      - id
+      - index
+      - currency
+      - amount
+      - status
+      - type
+  Address:
+    type: object
+    properties:
+      address:
+        type: string
+      paymentId:
+        type: string
+      publicKey:
+        type: string
+    required:
+      - address
+  PayoutCryptoAddress:
+    type: object
+    properties:
+      address:
+        type: string
+      paymentId:
+        type: string
+    required:
+      - address
+  WithdrawConfirm:
+    type: object
+    properties:
+      result:
+        type: boolean
+    required:
+      - result
+    example:
+      result: true
+  EstimatePayout:
+    type: object
+    properties:
+      fee:
+        type: string
+    required:
+      - fee
+    example:
+      fee: '0.0008'
+  EstimatePayoutFeeLevels:
+    type: object
+    properties:
+      feeLevelId:
+        type: integer
+      comment:
+        type: string
+      fee:
+        type: string
+      isDefault:
+        type: boolean
+    required:
+      - fee
+    example:
+      feeLevelId: 3
+      comment: fast
+      fee: '0.0008'
+      isDefault: true
+  AddressIsMineCheck:
+    type: object
+    properties:
+      result:
+        type: boolean
+    required:
+      - result
+    example:
+      result: true
+  ConvertTransfer:
+    type: array
+    items:
+      type: string
+  Candle:
+    type: object
+    properties:
+      timestamp:
+        type: string
+        format: date-time
+      open:
+        type: string
+      close:
+        type: string
+      min:
+        type: string
+      max:
+        type: string
+      volume:
+        type: string
+      volumeQuote:
+        type: string
+    required:
+      - timestamp
+      - open
+      - close
+      - min
+      - max
+      - volume
+      - volumeQuote
+  SubAccount:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      email:
+        type: string
+      status:
+        type: string
+  SubAccountAcl:
+    type: object
+    properties:
+      subAccountId:
+        type: integer
+        format: int64
+      isPayoutEnabled:
+        type: boolean
+      description:
+        type: string
+  SubAccountBalance:
+    type: object
+    properties:
+      main:
+        type: array
+        items:
+          type: object
+          properties:
+            currency:
+              type: string
+              description: currency code
+            available:
+              type: string
+              description: available balance
+            reserved:
+              type: string
+              description: reserved balance
+      trading:
+        type: array
+        items:
+          type: object
+          properties:
+            currency:
+              type: string
+              description: currency code
+            available:
+              type: string
+              description: available balance
+            reserved:
+              type: string
+              description: reserved balance
+  Error:
+    type: object
+    properties:
+      error:
+        type: object
+        properties:
+          code:
+            type: integer
+            format: int32
+            enum:
+              - 500
+              - 504
+              - 503
+              - 400
+              - 1001
+              - 1002
+              - 2001
+              - 2002
+              - 10001
+          message:
+            type: string
+            enum:
+              - Internal Server Error
+              - Gateway Timeout
+              - Service Unavailable
+              - Validation error
+              - Authorization required
+              - Authorization failed
+              - No such symbol
+              - No such currency
+              - Insufficient funds
+          description:
+            type: string
+        required:
+          - code
+          - message
